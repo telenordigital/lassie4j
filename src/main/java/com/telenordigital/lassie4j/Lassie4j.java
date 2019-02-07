@@ -18,7 +18,6 @@ package com.telenordigital.lassie4j;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.ObjectMapper;
 import java.io.IOException;
 
 import org.apache.http.HttpStatus;
@@ -30,7 +29,6 @@ import com.telenordigital.lassie4j.entities.DeviceData;
 import com.telenordigital.lassie4j.entities.DeviceDataList;
 import com.telenordigital.lassie4j.entities.Gateway;
 import com.telenordigital.lassie4j.entities.DownstreamMessage;;
-import com.fasterxml.jackson.databind.ObjectMapper;
 /**
 * This is the client for the Congress REST API.
 *
@@ -38,14 +36,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 */
 public class Lassie4j {
     private static final String TOKEN_HEADER = "X-API-Token";
-    
+
     private final String endpoint;
     private final String token;
-    
+
     static {
-        Unirest.setObjectMapper(new ObjectMapper() {
-            private ObjectMapper jacksonObjectMapper = new ObjectMapper();
-            
+        Unirest.setObjectMapper(new com.mashape.unirest.http.ObjectMapper() {
+            private com.fasterxml.jackson.databind.ObjectMapper jacksonObjectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
             public <T> T readValue(String value, Class<T> valueType) {
                 try {
                     return jacksonObjectMapper.readValue(value, valueType);
@@ -53,7 +51,7 @@ public class Lassie4j {
                     throw new RuntimeException(e);
                 }
             }
-            
+
             public String writeValue(Object value) {
                 try {
                     return jacksonObjectMapper.writeValueAsString(value);
@@ -63,7 +61,7 @@ public class Lassie4j {
             }
         });
     }
-    
+
     /**
     * Ping the backend to ensure it is reachable
     */
@@ -76,12 +74,12 @@ public class Lassie4j {
             if (resp.getStatus() == HttpStatus.SC_FORBIDDEN) {
                 throw new Lassie4jException(resp.getBody(), resp.getStatus());
             }
-            
+
         } catch (UnirestException ex) {
             throw new Lassie4jException(ex);
         }
     }
-    
+
     /**
     * Create a new Lassie4j client using the configuration. The configuration
     * can either be set by adding a ${HOME}/.lassie file or by setting the
@@ -92,10 +90,10 @@ public class Lassie4j {
         final Config cfg = new Config();
         this.token = cfg.token();
         this.endpoint = cfg.endpoint();
-        
+
         ping();
     }
-    
+
     /**
     * Create a new lassie4j client with the specified endpoint or token.
     */
@@ -103,12 +101,12 @@ public class Lassie4j {
         this.endpoint = endpoint;
         this.token = token;
     }
-    
+
     /**
     * generic POST on a resource
     */
     private <T> T create(
-        final String path, final T template, final Class<T> cls) 
+        final String path, final T template, final Class<T> cls)
         throws Lassie4jException {
         try {
             return Unirest
@@ -121,7 +119,7 @@ public class Lassie4j {
             throw new Lassie4jException(ue);
         }
     }
-    
+
     /**
     * generic DELETE on a resource
     */
@@ -132,11 +130,11 @@ public class Lassie4j {
             throw new Lassie4jException(ue);
         }
     }
-    
+
     /**
     * generic PUT on a resource
     */
-    private <T> T update(final String path, T updated, final Class<T> cls) 
+    private <T> T update(final String path, T updated, final Class<T> cls)
     throws Lassie4jException {
         try {
             return Unirest
@@ -149,11 +147,11 @@ public class Lassie4j {
             throw new Lassie4jException(ue);
         }
     }
-    
+
     /**
     * generic GET on a resource
     */
-    private <T> T get(final String path, final Class<T> cls) 
+    private <T> T get(final String path, final Class<T> cls)
     throws Lassie4jException {
         try {
             return Unirest
@@ -164,142 +162,141 @@ public class Lassie4j {
             throw new Lassie4jException(ue);
         }
     }
-    
+
     /**
     * Create a new aplication in Congress.
     */
-    public Application createApplication(final Application template) 
+    public Application createApplication(final Application template)
     throws Lassie4jException {
         return create("/applications", template, Application.class);
     }
-    
+
     /**
     * Retrieve an application from Congress.
     */
-    public Application application(final String appEui) 
+    public Application application(final String appEui)
     throws Lassie4jException {
         return get("/applications/" + appEui, Application.class);
     }
-    
+
     /**
     * Delete an application in Congress.
     */
-    public void deleteApplication(final String applicationEui) 
+    public void deleteApplication(final String applicationEui)
     throws Lassie4jException {
         delete("/applications/" + applicationEui);
     }
-    
+
     /**
     * Update an application in Congress.
     */
-    public Application updateApplication(final Application updated) 
+    public Application updateApplication(final Application updated)
     throws Lassie4jException {
-        return update("/applications/" + updated.eui(), 
+        return update("/applications/" + updated.eui(),
         updated, Application.class);
     }
-    
+
     /**
     * Create a device in Congress.
     */
-    public Device createDevice(final String appEui, final Device template) 
+    public Device createDevice(final String appEui, final Device template)
     throws Lassie4jException {
-        return create("/applications/" + appEui + "/devices", 
+        return create("/applications/" + appEui + "/devices",
         template, Device.class);
     }
-    
+
     /**
     * Retrieve a device from Congress.
     */
-    public Device device(final String appEui, final String deviceEui) 
+    public Device device(final String appEui, final String deviceEui)
     throws Lassie4jException {
-        return get("/applications/" + appEui + "/devices/" 
+        return get("/applications/" + appEui + "/devices/"
         + deviceEui, Device.class);
     }
-    
+
     /**
     * Update a device in Congress.
     */
-    public Device updateDevice(final String appEui, final Device updated) 
+    public Device updateDevice(final String appEui, final Device updated)
     throws Lassie4jException {
-        return update("/applications/" + appEui + "/devices/" 
+        return update("/applications/" + appEui + "/devices/"
         + updated.eui(), updated, Device.class);
     }
-    
+
     /**
     * Delete a device from Congress.
     */
-    public void deleteDevice(final String appEui, final String deviceEui) 
+    public void deleteDevice(final String appEui, final String deviceEui)
     throws Lassie4jException {
         delete("/applications/" + appEui + "/devices/" + deviceEui);
     }
-    
+
     /**
     * Retrieve messages from a device in Congress.
     */
-    public DeviceData[] deviceData(final String appEui, final String deviceEui) 
+    public DeviceData[] deviceData(final String appEui, final String deviceEui)
     throws Lassie4jException {
-        return get("/applications/" + appEui + "/devices/" 
+        return get("/applications/" + appEui + "/devices/"
             + deviceEui + "/data", DeviceDataList.class).data();
     }
-    
+
     /**
     * Create a gateway in Congress.
     */
     public Gateway createGateway(final Gateway template) throws Lassie4jException {
         return create("/gateways", template, Gateway.class);
     }
-    
+
     /**
     * Retrieve a gateway from Congress.
     */
     public Gateway gateway(final String gatewayEui) throws Lassie4jException {
         return get("/gateways/" + gatewayEui, Gateway.class);
     }
-    
+
     /**
     * Update a gateway in Congress.
     */
-    public Gateway updateGateway(final Gateway updated) 
+    public Gateway updateGateway(final Gateway updated)
     throws Lassie4jException {
         return update("/gateways/" + updated.eui(), updated, Gateway.class);
     }
-    
+
     /**
     * Delete a gateway from Congress.
     */
-    public void deleteGateway(final String gatewayEui) 
+    public void deleteGateway(final String gatewayEui)
     throws Lassie4jException {
         delete("/gateways/" + gatewayEui);
     }
-    
+
     /**
     * Schedule a downstream message to a device in Congress.
     */
     public DownstreamMessage scheduleMessage(
         final String appEui, final String deviceEui,
         final DownstreamMessage messageToSend) throws Lassie4jException {
-            return create("/applications/" + appEui 
-                + "/devices/" + deviceEui + "/message", 
+            return create("/applications/" + appEui
+                + "/devices/" + deviceEui + "/message",
                 messageToSend, DownstreamMessage.class);
         }
-        
+
         /**
         * Retrieve the currently scheduled message to a device in Congress.
         */
         public DownstreamMessage message(
-            final String appEui, final String deviceEui) 
+            final String appEui, final String deviceEui)
             throws Lassie4jException {
-            return get("/applications/" + appEui + "/devices/" 
+            return get("/applications/" + appEui + "/devices/"
                 + deviceEui + "/message", DownstreamMessage.class);
         }
-        
+
         /**
         * Remove a scheduled message from Congress.
         */
-        public void deleteMessage(final String appEui, final String deviceEui) 
+        public void deleteMessage(final String appEui, final String deviceEui)
         throws Lassie4jException {
-            delete("/applications/" + appEui + "/devices/" 
+            delete("/applications/" + appEui + "/devices/"
                 + deviceEui + "/message");
         }
     }
-    
